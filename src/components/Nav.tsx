@@ -17,11 +17,11 @@ export default function Nav() {
   return (
     <>
       <NavigationMenu>
-        <NavigationMenuList className="justify-center items-center">
+        <NavigationMenuList>
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href="/"
+              href="/pulpit"
             >
               Pulpit
             </NavigationMenuLink>
@@ -29,7 +29,7 @@ export default function Nav() {
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href="/kierowcy"
+              href="/pulpit/kierowcy"
             >
               Kierowcy
             </NavigationMenuLink>
@@ -37,7 +37,7 @@ export default function Nav() {
           <NavigationMenuItem>
             <NavigationMenuLink
               className={navigationMenuTriggerStyle()}
-              href="/rozliczenia"
+              href="/pulpit/rozliczenia"
             >
               Rozliczenia
             </NavigationMenuLink>
