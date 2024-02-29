@@ -1,6 +1,5 @@
 import { RegistrySchema } from "@/zod/registrySchema";
 import { UserSchema, User } from "@/zod/userSchema";
-require("dotenv").config();
 
 const baseUrl: string = "https://cl-ds.up.railway.app";
 
