@@ -17,5 +17,9 @@ export default function SignoutButton() {
     }
   }
 
-  return <Button onClick={() => onClickSignout()}>Wyloguj</Button>;
+  return (
+    <Button onClick={() => onClickSignout()} variant="ghost">
+      Wyloguj
+    </Button>
+  );
 }

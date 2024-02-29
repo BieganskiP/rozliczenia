@@ -1,9 +1,8 @@
-// "use server";
-
 import { RegistrySchema } from "@/zod/registrySchema";
 import { UserSchema, User } from "@/zod/userSchema";
+require("dotenv").config();
 
-const baseUrl: string = "http://localhost:3001";
+const baseUrl: string = "https://cl-ds.up.railway.app";
 
 export async function login(email: string, password: string) {
   const res = await fetch(`${baseUrl}/auth/login`, {
