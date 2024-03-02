@@ -1,3 +1,6 @@
+"use client";
+
+import { InviteSchema } from "@/zod/inviteSchema";
 import { RegistrySchema } from "@/zod/registrySchema";
 import { UserSchema, User } from "@/zod/userSchema";
 
@@ -36,11 +39,13 @@ export async function signup(email: string, password: string) {
     }),
   });
 
+  const data = await res.json();
+
   if (!res.ok) {
-    throw new Error("Failed to fetch data");
+    throw new Error(data.message || "Failed to fetch data");
   }
 
-  return res.json();
+  return data;
 }
 
 export async function currentUser(): Promise<User> {
@@ -95,4 +100,51 @@ export async function getRegistry() {
   console.log(registry);
 
   return registry;
+}
+
+export async function getInvite() {
+  const invitationId = getInvitationIdFromUrl();
+
+  const res = await fetch(`${baseUrl}/invitations/${invitationId}`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch invite");
+  }
+
+  const data = await res.json();
+  // const invite = InviteSchema.parse(data);
+
+  return data;
+}
+
+export async function getUsers() {
+  const res = await fetch(`${baseUrl}/auth`, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch invite");
+  }
+
+  const data = await res.json();
+  // const users = UserSchema.parse(data);
+
+  return data;
+}
+
+function getInvitationIdFromUrl() {
+  const pathArray = window.location.pathname.split("/");
+
+  const invitationId = pathArray[pathArray.length - 1];
+  return invitationId;
 }

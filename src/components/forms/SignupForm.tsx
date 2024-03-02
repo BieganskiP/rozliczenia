@@ -1,6 +1,6 @@
 "use client";
-
-import { string, z } from "zod";
+import { useEffect, useState } from "react";
+import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
@@ -14,15 +14,22 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import { login, signup } from "@/lib/actions";
+import { signup, getInvite } from "@/lib/actions";
 import { useRouter } from "next/navigation";
 
-const formSchema = z.object({
-  email: string().email(),
-  password: string().min(8),
-});
+const formSchema = z
+  .object({
+    email: z.string().email(),
+    password: z.string().min(8),
+    passwordVerification: z.string().min(8),
+  })
+  .refine((data) => data.password === data.passwordVerification, {
+    message: "Hasła muszą być identyczne",
+    path: ["passwordVerification"],
+  });
 
-export default function LoginForm() {
+export default function SignupForm() {
+  const [email, setEmail] = useState<string>("");
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -33,9 +40,19 @@ export default function LoginForm() {
     },
   });
 
-  const onLoginSubmit = async (values: z.infer<typeof formSchema>) => {
+  useEffect(() => {
+    getInvite()
+      .then((data) => {
+        setEmail(data.email);
+      })
+      .catch((error) => {
+        console.error("Error fetching invite:", error);
+      });
+  }, []);
+
+  const onSignupSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await login(values.email, values.password);
+      await signup(email, values.password);
       router.push("/pulpit");
     } catch (error) {
       console.error(error);
@@ -46,21 +63,9 @@ export default function LoginForm() {
     <div className="w-[400px]">
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onLoginSubmit)}
+          onSubmit={form.handleSubmit(onSignupSubmit)}
           className="space-y-4 border-[1px] border-gray-200 p-4 rounded-md"
         >
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input placeholder="Email" autoComplete="email" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="password"
@@ -72,8 +77,24 @@ export default function LoginForm() {
                 <FormMessage />
               </FormItem>
             )}
+          />{" "}
+          <FormField
+            control={form.control}
+            name="passwordVerification"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    placeholder="Potwierdź hasło"
+                    type="password"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
           />
-          <Button type="submit">Zaloguj</Button>
+          <Button type="submit">Zarejestruj</Button>
         </form>
       </Form>
     </div>
