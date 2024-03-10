@@ -1,28 +1,33 @@
 "use client";
-import { useState, useEffect } from "react";
-import { getUsers } from "@/lib/actions";
+import { Button } from "./ui/button";
+import {
+  useGetUsersQuery,
+  useDeleteUserMutation,
+} from "@/redux/slices/createApi";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 export default function UsersTable() {
-  const [userData, setUserData] = useState<any>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const {
+    data: userData,
+    isLoading: loadingUserData,
+    refetch: refetchUsers,
+  } = useGetUsersQuery({});
+  const [deleteUser] = useDeleteUserMutation({});
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const userData = await getUsers();
-        setUserData(userData);
-      } catch (error) {
-        console.error("Failed to fetch current user", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const handleDelete = async (userId: number) => {
+    try {
+      await deleteUser(userId);
 
-    fetchUsers();
-  }, []);
+      refetchUsers();
+      console.log(`User with ID ${userId} has been deleted.`);
+    } catch (error) {
+      console.error("Failed to delete user:", error);
+    }
+  };
 
-  if (loading) {
-    return <div>Loading...</div>;
+  if (loadingUserData) {
+    return <div>Wczytywanie...</div>;
   }
 
   return (
@@ -31,25 +36,28 @@ export default function UsersTable() {
         <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
           <tr>
             <th scope="col" className="py-3 px-6">
-              User ID
+              ID użytkownika
             </th>
             <th scope="col" className="py-3 px-6">
               Email
             </th>
             <th scope="col" className="py-3 px-6">
-              Name
+              Imię
             </th>
             <th scope="col" className="py-3 px-6">
-              Wage
+              Stawka
             </th>
             <th scope="col" className="py-3 px-6">
               Region
             </th>
             <th scope="col" className="py-3 px-6">
-              Car
+              Samochód
             </th>
             <th scope="col" className="py-3 px-6">
-              Role
+              Rola
+            </th>
+            <th scope="col" className="py-3 px-6">
+              Akcja
             </th>
           </tr>
         </thead>
@@ -61,11 +69,19 @@ export default function UsersTable() {
             >
               <td className="py-4 px-6">{user.id}</td>
               <td className="py-4 px-6">{user.email}</td>
-              <td className="py-4 px-6">{user.name || "N/A"}</td>
-              <td className="py-4 px-6">{user.wage || "N/A"}</td>
-              <td className="py-4 px-6">{user.region || "N/A"}</td>
-              <td className="py-4 px-6">{user.car || "N/A"}</td>
+              <td className="py-4 px-6">{user.name || "-"}</td>
+              <td className="py-4 px-6">{user.wage || "-"}</td>
+              <td className="py-4 px-6">{user.region || "-"}</td>
+              <td className="py-4 px-6">{user.car || "-"}</td>
               <td className="py-4 px-6">{user.role}</td>
+              <td className="py-4 px-6">
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDelete(user.id)}
+                >
+                  <FontAwesomeIcon icon={faTrashCan} />
+                </Button>
+              </td>
             </tr>
           ))}
         </tbody>

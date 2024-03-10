@@ -14,8 +14,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import { login, signup } from "@/lib/actions";
+// import { login } from "@/lib/actions";
 import { useRouter } from "next/navigation";
+import { useLoginMutation } from "@/redux/slices/createApi";
 
 const formSchema = z.object({
   email: string().email(),
@@ -24,6 +25,7 @@ const formSchema = z.object({
 
 export default function LoginForm() {
   const router = useRouter();
+  const [login, { isLoading, error }] = useLoginMutation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -35,7 +37,7 @@ export default function LoginForm() {
 
   const onLoginSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await login(values.email, values.password);
+      await login({ email: values.email, password: values.password }).unwrap();
       router.push("/pulpit");
     } catch (error) {
       console.error(error);

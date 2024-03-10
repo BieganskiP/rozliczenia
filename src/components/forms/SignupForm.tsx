@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,45 +15,48 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 
-import { signup, getInvite } from "@/lib/actions";
-import { useRouter } from "next/navigation";
+import { useGetInviteQuery, useSignupMutation } from "@/redux/slices/createApi";
 
-const formSchema = z
-  .object({
-    email: z.string().email(),
-    password: z.string().min(8),
-    passwordVerification: z.string().min(8),
-  })
-  .refine((data) => data.password === data.passwordVerification, {
-    message: "Hasła muszą być identyczne",
-    path: ["passwordVerification"],
-  });
+const formSchema = z.object({
+  email: z.string(),
+  password: z.string().min(8),
+});
 
 export default function SignupForm() {
-  const [email, setEmail] = useState<string>("");
+  const [invitationId, setInvitationId] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const pathParts = window.location.pathname.split("/");
+    const lastSegment = (pathParts.pop() || pathParts.pop()) ?? null;
+    setInvitationId(lastSegment);
+  }, []);
+
+  const { data: inviteData, isLoading: inviteLoading } = useGetInviteQuery(
+    invitationId ?? "",
+    {
+      skip: !invitationId,
+    }
+  );
+  const [signup, { isLoading: isSigningUp }] = useSignupMutation();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      email: "",
-      password: "",
-    },
+    defaultValues: { password: "" },
   });
 
   useEffect(() => {
-    getInvite()
-      .then((data) => {
-        setEmail(data.email);
-      })
-      .catch((error) => {
-        console.error("Error fetching invite:", error);
-      });
-  }, []);
+    if (inviteData?.email) {
+      form.reset({ email: inviteData.email });
+    }
+  }, [inviteData, form]);
 
   const onSignupSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await signup(email, values.password);
+      await signup({
+        email: inviteData?.email,
+        password: values.password,
+      }).unwrap();
       router.push("/pulpit");
     } catch (error) {
       console.error(error);
@@ -66,35 +70,41 @@ export default function SignupForm() {
           onSubmit={form.handleSubmit(onSignupSubmit)}
           className="space-y-4 border-[1px] border-gray-200 p-4 rounded-md"
         >
+          {inviteData?.email && (
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormControl>
+                    <Input
+                      placeholder="Email"
+                      type="email"
+                      {...field}
+                      disabled
+                      value={inviteData.email}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
           <FormField
             control={form.control}
             name="password"
             render={({ field }) => (
               <FormItem>
                 <FormControl>
-                  <Input placeholder="Hasło" type="password" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />{" "}
-          <FormField
-            control={form.control}
-            name="passwordVerification"
-            render={({ field }) => (
-              <FormItem>
-                <FormControl>
-                  <Input
-                    placeholder="Potwierdź hasło"
-                    type="password"
-                    {...field}
-                  />
+                  <Input placeholder="Password" type="password" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-          <Button type="submit">Zarejestruj</Button>
+          <Button type="submit" disabled={isSigningUp || inviteLoading}>
+            Register
+          </Button>
         </form>
       </Form>
     </div>
